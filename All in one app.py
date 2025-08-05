@@ -108,13 +108,19 @@ with st.sidebar:
 # --- Feature Selection ---
 st.title("🧰 Image Editing Tools")
 feature = st.selectbox("Choose a feature:", [
-    "Background Remover", 
+  "Background Remover", 
     "Image Cropper", 
     "Image Resizer", 
     "Change Background Color", 
     "Add Name & Date (Exam Format)",
     "Resize Signature for Exams",
-    "UPSC Photo Format Generator"
+    "UPSC Photo Format Generator",
+    "Convert to Grayscale",
+    "Rotate Image",
+    "Flip Image",
+    "Convert Image Format",
+    "Draw Shape",
+    "Add Custom Text"
 ])
 
 # --- File Upload ---
@@ -218,3 +224,82 @@ if uploaded_file:
             buf = BytesIO()
             canvas.save(buf, format="JPEG")
             st.download_button("⬇️ Download UPSC Photo", buf.getvalue(), file_name="upsc_photo.jpg", mime="image/jpeg")
+
+
+# Place this right below the last elif (UPSC Photo Format Generator):
+
+    elif feature == "Convert to Grayscale":
+        if st.button("🌑 Convert to Grayscale"):
+            gray_img = image.convert("L")
+            st.image(gray_img, caption="🌑 Grayscale Image", use_column_width=True)
+            buf = BytesIO()
+            gray_img.save(buf, format="PNG")
+            st.download_button("⬇️ Download Grayscale", buf.getvalue(), file_name="grayscale.png")
+
+    elif feature == "Rotate Image":
+        angle = st.slider("🔄 Select Rotation Angle", 0, 360, 90)
+        if st.button("🔃 Rotate"):
+            rotated = image.rotate(angle, expand=True)
+            st.image(rotated, caption=f"🔃 Rotated by {angle}°", use_column_width=True)
+            buf = BytesIO()
+            rotated.save(buf, format="PNG")
+            st.download_button("⬇️ Download Rotated", buf.getvalue(), file_name="rotated.png")
+
+    elif feature == "Flip Image":
+        direction = st.radio("↔️ Flip Direction", ["Horizontal", "Vertical"])
+        if st.button("↔️ Flip"):
+            flipped = image.transpose(Image.FLIP_LEFT_RIGHT if direction == "Horizontal" else Image.FLIP_TOP_BOTTOM)
+            st.image(flipped, caption=f"↔️ Flipped {direction}", use_column_width=True)
+            buf = BytesIO()
+            flipped.save(buf, format="PNG")
+            st.download_button("⬇️ Download Flipped", buf.getvalue(), file_name="flipped.png")
+
+    elif feature == "Convert Image Format":
+        new_format = st.selectbox("📁 Convert to Format", ["PNG", "JPEG"])
+        if st.button("🔁 Convert Format"):
+            buf = BytesIO()
+            image_rgb = image.convert("RGB")
+            image_rgb.save(buf, format=new_format)
+            ext = "jpg" if new_format == "JPEG" else "png"
+            mime = "image/jpeg" if new_format == "JPEG" else "image/png"
+            st.download_button(f"⬇️ Download as {new_format}", buf.getvalue(), file_name=f"converted.{ext}", mime=mime)
+
+    elif feature == "Draw Shape":
+        shape = st.selectbox("⬛ Choose Shape", ["Rectangle", "Circle"])
+        x = st.number_input("Start X", 0, image.width, 10)
+        y = st.number_input("Start Y", 0, image.height, 10)
+        w = st.number_input("Width/Radius", 1, image.width, 100)
+        h = st.number_input("Height (for Rectangle)", 1, image.height, 100)
+        color = st.color_picker("🎨 Pick Shape Color", "#ff0000")
+        if st.button("✏️ Draw"):
+            draw_img = image.copy()
+            draw = ImageDraw.Draw(draw_img)
+            if shape == "Rectangle":
+                draw.rectangle([x, y, x + w, y + h], outline=color, width=5)
+            else:
+                draw.ellipse([x, y, x + w, y + w], outline=color, width=5)
+            st.image(draw_img, caption=f"✏️ {shape} Drawn", use_column_width=True)
+            buf = BytesIO()
+            draw_img.save(buf, format="PNG")
+            st.download_button("⬇️ Download Drawn Image", buf.getvalue(), file_name="shape_drawn.png")
+
+    elif feature == "Add Custom Text":
+        text = st.text_input("🖊️ Enter Text")
+        x = st.number_input("Text X Position", 0, image.width, 10)
+        y = st.number_input("Text Y Position", 0, image.height, 10)
+        color = st.color_picker("🎨 Pick Text Color", "#000000")
+        size = st.slider("🔠 Font Size", 10, 100, 20)
+        if st.button("📝 Add Text"):
+            edited = image.copy()
+            draw = ImageDraw.Draw(edited)
+            try:
+                font = ImageFont.truetype("arial.ttf", size)
+            except:
+                font = ImageFont.load_default()
+            draw.text((x, y), text, fill=color, font=font)
+            st.image(edited, caption="📝 Text Added", use_column_width=True)
+            buf = BytesIO()
+            edited.save(buf, format="PNG")
+            st.download_button("⬇️ Download Text Image", buf.getvalue(), file_name="text_added.png")
+
+
