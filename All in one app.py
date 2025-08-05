@@ -11,7 +11,7 @@ from rembg.bg import remove, new_session
 st.set_page_config(page_title="🖼️ Multi Feature Image Tool", layout="wide")
 
 # --- Constants ---
-SESSION_TIMEOUT = 180
+SESSION_TIMEOUT = 1200
 CONFIG_FILE = "config.yaml"
 SESSION_FILE = "session_data.yaml"
 
@@ -320,6 +320,7 @@ elif feature == "AI Image Upscaler":
                 st.error(f"❌ Failed to generate download: {e}")
     else:
         st.warning("⚠️ Please upload an image to use the upscaler.")
+
 
 
 
