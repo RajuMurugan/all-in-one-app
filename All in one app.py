@@ -3,12 +3,12 @@ import os
 import time
 import uuid
 import yaml
-from PIL import Image
+from PIL import Image, ImageDraw, ImageFont
 from io import BytesIO
 from rembg.bg import remove, new_session
 
 # --- Page Config ---
-st.set_page_config(page_title="🖼️ Transparent BG Remover", layout="wide")
+st.set_page_config(page_title="🖼️ Transparent BG Remover & Editor", layout="wide")
 
 # --- Constants ---
 SESSION_TIMEOUT = 180
@@ -105,8 +105,8 @@ with st.sidebar:
         logout_user()
         st.rerun()
 
-# --- Image Background Removal UI ---
-st.title("🖼️ Transparent Background Remover")
+# --- Features UI ---
+st.title("🛠️ Transparent Background Remover & Editor")
 
 uploaded_file = st.file_uploader("📤 Upload Image (JPG/PNG)", type=["png", "jpg", "jpeg"])
 if uploaded_file:
@@ -115,9 +115,8 @@ if uploaded_file:
 
     if st.button("✨ Remove Background"):
         with st.spinner("Processing high-accuracy model..."):
-            # create session once per run
             session = new_session("isnet-general-use")
-            output = remove(
+            image = remove(
                 image,
                 session=session,
                 alpha_matting=True,
@@ -125,9 +124,53 @@ if uploaded_file:
                 alpha_matting_background_threshold=10,
                 alpha_matting_erode_size=5
             )
+        st.image(image, caption="✅ Clean Transparent Output", use_column_width=True)
 
-            st.image(output, caption="✅ Clean Transparent Output", use_column_width=True)
-            buf = BytesIO()
-            output.save(buf, format="PNG")
-            byte_im = buf.getvalue()
-            st.download_button("⬇️ Download PNG", byte_im, file_name="output.png", mime="image/png")
+    st.subheader("✂️ Crop Image")
+    x1 = st.number_input("Left", 0, image.width, 0)
+    y1 = st.number_input("Top", 0, image.height, 0)
+    x2 = st.number_input("Right", 0, image.width, image.width)
+    y2 = st.number_input("Bottom", 0, image.height, image.height)
+    if st.button("Apply Crop"):
+        image = image.crop((x1, y1, x2, y2))
+        st.image(image, caption="Cropped Image")
+
+    st.subheader("📐 Resize Image")
+    new_width = st.number_input("Width", 1, 5000, image.width)
+    new_height = st.number_input("Height", 1, 5000, image.height)
+    if st.button("Apply Resize"):
+        image = image.resize((new_width, new_height), Image.LANCZOS)
+        st.image(image, caption="Resized Image")
+
+    st.subheader("🎨 Change Background Color")
+    bg_color = st.color_picker("Pick Color", "#FFFFFF")
+    if st.button("Apply BG Color"):
+        rgb = tuple(int(bg_color[i:i+2], 16) for i in (1, 3, 5))
+        bg = Image.new("RGBA", image.size, rgb + (255,))
+        image = Image.alpha_composite(bg, image)
+        st.image(image, caption="New Background")
+
+    st.subheader("📝 Add Name and Date")
+    name = st.text_input("Enter Name")
+    date = st.text_input("Enter Date")
+    if st.button("Apply Name/Date"):
+        draw = ImageDraw.Draw(image)
+        font = ImageFont.load_default()
+        text = f"{name} | {date}"
+        w, h = draw.textsize(text, font=font)
+        x = (image.width - w) // 2
+        y = image.height - h - 10
+        draw.rectangle([x-5, y-5, x+w+5, y+h+5], fill=(255,255,255,180))
+        draw.text((x, y), text, font=font, fill=(0,0,0))
+        st.image(image, caption="Image with Name & Date")
+
+    signature = st.file_uploader("Upload Signature", type=["png","jpg","jpeg"])
+    if signature:
+        sig = Image.open(signature).convert("RGBA")
+        sig_resized = sig.resize((image.width//3, image.height//10), Image.LANCZOS)
+        image.paste(sig_resized, (10, image.height - sig_resized.height - 10), sig_resized)
+        st.image(image, caption="With Signature")
+
+    buf = BytesIO()
+    image.save(buf, format="PNG")
+    st.download_button("⬇️ Download Final Image", buf.getvalue(), file_name="final_image.png", mime="image/png")
