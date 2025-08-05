@@ -305,21 +305,34 @@ if uploaded_file:
 
 elif feature == "AI Image Upscaler":
     if uploaded_file:
-        scale = st.selectbox("Select Upscale Factor", ["2×", "4×"])
-        if st.button("🔍 Upscale"):
+        image = Image.open(uploaded_file).convert("RGBA")
+        st.image(image, caption="📷 Original Image", use_column_width=True)
+
+        scale = st.selectbox("🔍 Select Upscale Factor", ["2×", "4×"])
+        if st.button("🚀 Upscale"):
             with st.spinner("Upscaling image..."):
                 scale_factor = 2 if scale == "2×" else 4
-                upscaled = image.resize((image.width * scale_factor, image.height * scale_factor), Image.LANCZOS)
+                upscaled = image.resize(
+                    (image.width * scale_factor, image.height * scale_factor),
+                    Image.LANCZOS
+                )
 
-            st.image(upscaled, caption=f"Upscaled {scale}", use_column_width=True)
+            st.image(upscaled, caption=f"🖼️ Upscaled {scale}", use_column_width=True)
+
             try:
                 buf = BytesIO()
                 upscaled.save(buf, format="PNG")
-                st.download_button("⬇️ Download Upscaled", buf.getvalue(), file_name="upscaled.png", mime="image/png")
+                st.download_button(
+                    "⬇️ Download Upscaled Image",
+                    buf.getvalue(),
+                    file_name="upscaled.png",
+                    mime="image/png"
+                )
             except Exception as e:
                 st.error(f"❌ Failed to generate download: {e}")
     else:
         st.warning("⚠️ Please upload an image to use the upscaler.")
+
 
 
 
