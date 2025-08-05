@@ -3,19 +3,19 @@ import os
 import time
 import uuid
 import yaml
-from PIL import Image
+from PIL import Image, ImageOps
 from io import BytesIO
 from rembg import remove
 
 # --- Page Config ---
-st.set_page_config(page_title="🖼️ Accurate Background Remover", layout="wide")
+st.set_page_config(page_title="🖼️ Smart Background Remover", layout="wide")
 
 # --- Constants ---
 SESSION_TIMEOUT = 180
 CONFIG_FILE = "config.yaml"
 SESSION_FILE = "session_data.yaml"
 
-# --- Load config.yaml ---
+# --- Config Loader ---
 def load_config():
     try:
         with open(CONFIG_FILE, "r") as f:
@@ -24,7 +24,6 @@ def load_config():
         st.error(f"Error loading config.yaml: {e}")
         st.stop()
 
-# --- Session file handlers ---
 def load_sessions():
     if os.path.exists(SESSION_FILE):
         with open(SESSION_FILE, "r") as f:
@@ -60,7 +59,7 @@ def logout_user():
     st.session_state.mobile = ""
     st.session_state.device_id = str(uuid.uuid4())
 
-# --- Init Session ---
+# --- Init State ---
 if "logged_in" not in st.session_state:
     st.session_state.logged_in = False
 if "mobile" not in st.session_state:
@@ -68,12 +67,12 @@ if "mobile" not in st.session_state:
 if "device_id" not in st.session_state:
     st.session_state.device_id = str(uuid.uuid4())
 
-# --- Load Config and Sessions ---
+# --- Load config ---
 config = load_config()
 users = config["credentials"]["users"]
 session_data = load_sessions()
 
-# --- Login Page ---
+# --- Login ---
 if not st.session_state.logged_in:
     st.title("🔐 Login")
     mobile = st.text_input("📱 Mobile Number")
@@ -112,11 +111,15 @@ with st.sidebar:
         logout_user()
         st.rerun()
 
-# --- UI for Upload ---
-st.title("🖼️ Accurate Background Remover")
+# --- UI: Upload ---
+st.title("🖼️ Smart Background Remover")
+uploaded_file = st.file_uploader("📤 Upload Image", type=["png", "jpg", "jpeg"])
 
-uploaded_file = st.file_uploader("📤 Upload an image (JPG or PNG)", type=["png", "jpg", "jpeg"])
+# --- Settings ---
+model_option = st.radio("Choose Model", ["default", "isnet-general-use"], horizontal=True)
+fallback = st.checkbox("🤍 Apply white background fallback (no transparency)", value=True)
 
+# --- Process Image ---
 if uploaded_file:
     image = Image.open(uploaded_file).convert("RGBA")
     st.image(image, caption="📷 Original Image", use_column_width=True)
@@ -126,14 +129,20 @@ if uploaded_file:
             output = remove(
                 image,
                 alpha_matting=True,
-                alpha_matting_foreground_threshold=250,   # MAX for edge detection
+                alpha_matting_foreground_threshold=250,
                 alpha_matting_background_threshold=5,
-                alpha_matting_erode_size=5                 # Gentle erosion to preserve hair
+                alpha_matting_erode_size=5,
+                session=None,
+                model_name=None if model_option == "default" else "isnet-general-use"
             )
 
-            st.image(output, caption="✅ Cleaned Background", use_column_width=True)
+            if fallback:
+                white_bg = Image.new("RGBA", output.size, (255, 255, 255, 255))
+                output = Image.alpha_composite(white_bg, output)
+
+            st.image(output, caption="✅ Final Output", use_column_width=True)
 
             buf = BytesIO()
             output.save(buf, format="PNG")
             byte_im = buf.getvalue()
-            st.download_button("⬇️ Download Transparent Image", byte_im, file_name="output.png", mime="image/png")
+            st.download_button("⬇️ Download", byte_im, file_name="cleaned_image.png", mime="image/png")
