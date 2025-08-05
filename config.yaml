@@ -2,6 +2,7 @@ credentials:
   users:
     "8248696926":
       password: "demo123"
-    "1234567890":
-      password: "testpass"
+    "123":
+      password: "123"
+
 
