@@ -1,22 +1,21 @@
 import streamlit as st
-import platform
 import os
 import time
-import yaml
 import uuid
-from rembg import remove
+import yaml
 from PIL import Image
 from io import BytesIO
+from rembg import remove
 
 # --- Page Config ---
-st.set_page_config(page_title="🖼️ Background Remover App", layout="wide")
+st.set_page_config(page_title="🖼️ High-Quality Background Remover", layout="wide")
 
 # --- Constants ---
-SESSION_TIMEOUT = 180  # seconds
+SESSION_TIMEOUT = 500  # seconds
 CONFIG_FILE = "config.yaml"
 SESSION_FILE = "session_data.yaml"
 
-# --- Session Management ---
+# --- Load config.yaml ---
 def load_config():
     try:
         with open(CONFIG_FILE, "r") as f:
@@ -25,6 +24,7 @@ def load_config():
         st.error(f"Error loading config.yaml: {e}")
         st.stop()
 
+# --- Session file handlers ---
 def load_sessions():
     if os.path.exists(SESSION_FILE):
         with open(SESSION_FILE, "r") as f:
@@ -60,7 +60,7 @@ def logout_user():
     st.session_state.mobile = ""
     st.session_state.device_id = str(uuid.uuid4())
 
-# --- Init Session State ---
+# --- Init Session ---
 if "logged_in" not in st.session_state:
     st.session_state.logged_in = False
 if "mobile" not in st.session_state:
@@ -103,7 +103,7 @@ if not is_session_valid(mobile, st.session_state.device_id):
 
 update_session(mobile, st.session_state.device_id)
 
-# --- Sidebar ---
+# --- Sidebar with Logout ---
 with st.sidebar:
     st.success(f"✅ Logged in as: {mobile}")
     remaining = SESSION_TIMEOUT - int(time.time() - session_data["active_users"][mobile]["timestamp"])
@@ -113,11 +113,12 @@ with st.sidebar:
         st.rerun()
 
 # --- Image Background Remover UI ---
-st.title("🖼️ Image Background Remover")
-uploaded_file = st.file_uploader("Upload an image (JPG or PNG)", type=["png", "jpg", "jpeg"])
+st.title("🖼️ Image Background Remover (High Quality)")
+
+uploaded_file = st.file_uploader("📤 Upload an image (JPG or PNG)", type=["png", "jpg", "jpeg"])
 
 if uploaded_file:
-    image = Image.open(uploaded_file).convert("RGBA")  # Ensure transparency support
+    image = Image.open(uploaded_file).convert("RGBA")  # Ensure RGBA for transparency
     st.image(image, caption="🖼️ Original Image", use_column_width=True)
 
     if st.button("✨ Remove Background"):
@@ -125,9 +126,9 @@ if uploaded_file:
             output = remove(
                 image,
                 alpha_matting=True,
-                alpha_matting_foreground_threshold=240,
-                alpha_matting_background_threshold=10,
-                alpha_matting_erode_size=10
+                alpha_matting_foreground_threshold=250,
+                alpha_matting_background_threshold=5,
+                alpha_matting_erode_size=15
             )
             st.image(output, caption="✅ Background Removed", use_column_width=True)
 
@@ -135,4 +136,4 @@ if uploaded_file:
             buf = BytesIO()
             output.save(buf, format="PNG")
             byte_im = buf.getvalue()
-            st.download_button("⬇️ Download Image", byte_im, file_name="output.png", mime="image/png")
+            st.download_button("⬇️ Download Transparent Image", byte_im, file_name="output.png", mime="image/png")
