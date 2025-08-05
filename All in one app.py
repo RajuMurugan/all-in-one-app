@@ -121,7 +121,10 @@ feature = st.selectbox("Choose a feature:", [
   "Convert Image Format",
   "Draw Shape",
   "Add Custom Text",
-  "AI Image Upscaler"
+  "AI Image Upscaler",
+  "Smart Auto-Crop",                # ✅ New Feature
+  "Magic Eraser (Click-to-Remove)", # ✅ New Feature
+  "AI Background Replacer"          # ✅ New Feature
 ])
 
 # --- File Upload ---
@@ -244,3 +247,51 @@ if uploaded_file:
                 file_name="upscaled.png",
                 mime="image/png"
             )
+
+    elif feature == "Smart Auto-Crop":
+        if st.button("🎯 Auto-Crop to Subject"):
+            with st.spinner("Cropping..."):
+                grayscale = image.convert("L")
+                bbox = grayscale.getbbox()
+                if bbox:
+                    cropped = image.crop(bbox)
+                    st.image(cropped, caption="🎯 Smart Auto-Cropped", use_container_width=True)
+                    buf = BytesIO()
+                    cropped.save(buf, format="PNG")
+                    st.download_button("⬇️ Download Auto-Cropped", buf.getvalue(), file_name="smart_cropped.png")
+
+    elif feature == "Magic Eraser (Click-to-Remove)":
+        st.info("🪄 Click on area in image to erase unwanted object.")
+        import cv2
+        import numpy as np
+
+        image_np = np.array(image.convert("RGB"))
+        click = st.image(image_np, use_container_width=True)
+
+        coords = st.text_input("🖱️ Enter pixel (x,y) to remove object (e.g., 100,150):")
+        if coords and st.button("🧽 Erase"):
+            try:
+                x, y = map(int, coords.split(","))
+                mask = np.zeros(image_np.shape[:2], np.uint8)
+                cv2.circle(mask, (x, y), 20, 255, -1)
+                inpainted = cv2.inpaint(image_np, mask, 3, cv2.INPAINT_TELEA)
+                st.image(inpainted, caption="✅ Object Removed", use_container_width=True)
+                buf = BytesIO()
+                Image.fromarray(inpainted).save(buf, format="PNG")
+                st.download_button("⬇️ Download Cleaned Image", buf.getvalue(), file_name="magic_eraser.png")
+            except Exception as e:
+                st.error(f"⚠️ Error: {e}")
+
+    elif feature == "AI Background Replacer":
+        st.warning("This is a demo using simple background replace. For better results, integrate with stable diffusion or Unsplash APIs.")
+        bg_color = st.color_picker("🎨 Pick Replacement Background Color", "#87ceeb")  # Sky blue
+        if st.button("🖼️ Replace Background"):
+            with st.spinner("Replacing..."):
+                session = new_session("isnet-general-use")
+                fg = remove(image, session=session)
+                background = Image.new("RGBA", image.size, bg_color)
+                background.paste(fg, mask=fg.split()[3])  # Use alpha channel as mask
+                st.image(background, caption="🖼️ Background Replaced", use_container_width=True)
+                buf = BytesIO()
+                background.save(buf, format="PNG")
+                st.download_button("⬇️ Download Replaced Image", buf.getvalue(), file_name="bg_replaced.png")
