@@ -113,15 +113,9 @@ with st.sidebar:
         st.rerun()
 
 # --- Background Removal Section ---
-st.title("🖼️ High-Quality Background Remover")
+st.title("🖼️ Accurate Background Remover")
 
 uploaded_file = st.file_uploader("📤 Upload an image (JPG or PNG)", type=["png", "jpg", "jpeg"])
-
-# Optional controls
-use_matting = st.sidebar.checkbox("Use Alpha Matting (Better edges)", value=True)
-threshold_fore = st.sidebar.slider("Foreground Threshold", 200, 255, 240)
-threshold_back = st.sidebar.slider("Background Threshold", 0, 50, 10)
-erode_size = st.sidebar.slider("Erode Size", 0, 20, 10)
 
 if uploaded_file:
     image = Image.open(uploaded_file).convert("RGBA")
@@ -131,15 +125,14 @@ if uploaded_file:
         with st.spinner("Removing background... Please wait..."):
             output = remove(
                 image,
-                alpha_matting=use_matting,
-                alpha_matting_foreground_threshold=threshold_fore,
-                alpha_matting_background_threshold=threshold_back,
-                alpha_matting_erode_size=erode_size
+                alpha_matting=True,
+                alpha_matting_foreground_threshold=240,
+                alpha_matting_background_threshold=10,
+                alpha_matting_erode_size=10
             )
 
             st.image(output, caption="✅ Background Removed", use_column_width=True)
 
-            # Download
             buf = BytesIO()
             output.save(buf, format="PNG")
             byte_im = buf.getvalue()
