@@ -117,12 +117,18 @@ st.title("🖼️ Image Background Remover")
 uploaded_file = st.file_uploader("Upload an image (JPG or PNG)", type=["png", "jpg", "jpeg"])
 
 if uploaded_file:
-    image = Image.open(uploaded_file)
+    image = Image.open(uploaded_file).convert("RGBA")  # Ensure transparency support
     st.image(image, caption="🖼️ Original Image", use_column_width=True)
 
     if st.button("✨ Remove Background"):
-        with st.spinner("Processing..."):
-            output = remove(image)
+        with st.spinner("Processing... Please wait..."):
+            output = remove(
+                image,
+                alpha_matting=True,
+                alpha_matting_foreground_threshold=240,
+                alpha_matting_background_threshold=10,
+                alpha_matting_erode_size=10
+            )
             st.image(output, caption="✅ Background Removed", use_column_width=True)
 
             # Download button
