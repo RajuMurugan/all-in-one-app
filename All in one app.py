@@ -103,7 +103,7 @@ if not is_session_valid(mobile, st.session_state.device_id):
 
 update_session(mobile, st.session_state.device_id)
 
-# --- Sidebar with Logout ---
+# --- Sidebar ---
 with st.sidebar:
     st.success(f"✅ Logged in as: {mobile}")
     remaining = SESSION_TIMEOUT - int(time.time() - session_data["active_users"][mobile]["timestamp"])
@@ -112,7 +112,7 @@ with st.sidebar:
         logout_user()
         st.rerun()
 
-# --- Background Removal Section ---
+# --- UI for Upload ---
 st.title("🖼️ Accurate Background Remover")
 
 uploaded_file = st.file_uploader("📤 Upload an image (JPG or PNG)", type=["png", "jpg", "jpeg"])
@@ -122,18 +122,18 @@ if uploaded_file:
     st.image(image, caption="📷 Original Image", use_column_width=True)
 
     if st.button("✨ Remove Background"):
-        with st.spinner("Removing background... Please wait..."):
+        with st.spinner("Removing background..."):
             output = remove(
                 image,
                 alpha_matting=True,
-                alpha_matting_foreground_threshold=240,
-                alpha_matting_background_threshold=10,
-                alpha_matting_erode_size=10
+                alpha_matting_foreground_threshold=250,   # MAX for edge detection
+                alpha_matting_background_threshold=5,
+                alpha_matting_erode_size=5                 # Gentle erosion to preserve hair
             )
 
-            st.image(output, caption="✅ Background Removed", use_column_width=True)
+            st.image(output, caption="✅ Cleaned Background", use_column_width=True)
 
             buf = BytesIO()
             output.save(buf, format="PNG")
             byte_im = buf.getvalue()
-            st.download_button("⬇️ Download Image", byte_im, file_name="output.png", mime="image/png")
+            st.download_button("⬇️ Download Transparent Image", byte_im, file_name="output.png", mime="image/png")
