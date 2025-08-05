@@ -1,4 +1,5 @@
 streamlit
 Pillow
 rembg
+onnxruntime
 pyyaml
