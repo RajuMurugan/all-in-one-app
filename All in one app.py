@@ -106,30 +106,30 @@ with st.sidebar:
         st.rerun()
 
 # --- Feature Selection ---
-st.title("🧰 Image Editing Tools")
+st.title("🪰 Image Editing Tools")
 feature = st.selectbox("Choose a feature:", [
   "Background Remover", 
-    "Image Cropper", 
-    "Image Resizer", 
-    "Change Background Color", 
-    "Add Name & Date (Exam Format)",
-    "Resize Signature for Exams",
-    "UPSC Photo Format Generator",
-    "Convert to Grayscale",
-    "Rotate Image",
-    "Flip Image",
-    "Convert Image Format",
-    "Draw Shape",
-    "Add Custom Text",
-    "AI Image Upscaler"
+  "Image Cropper", 
+  "Image Resizer", 
+  "Change Background Color", 
+  "Add Name & Date (Exam Format)",
+  "Resize Signature for Exams",
+  "UPSC Photo Format Generator",
+  "Convert to Grayscale",
+  "Rotate Image",
+  "Flip Image",
+  "Convert Image Format",
+  "Draw Shape",
+  "Add Custom Text",
+  "AI Image Upscaler"
 ])
 
 # --- File Upload ---
-uploaded_file = st.file_uploader("📤 Upload Image", type=["png", "jpg", "jpeg"])
+uploaded_file = st.file_uploader("📄 Upload Image", type=["png", "jpg", "jpeg"])
 
 if uploaded_file:
     image = Image.open(uploaded_file).convert("RGBA")
-    st.image(image, caption="📷 Original Image", use_column_width=True)
+    st.image(image, caption="📷 Original Image", use_container_width=True)
 
     if feature == "Background Remover":
         if st.button("✨ Remove Background"):
@@ -143,7 +143,7 @@ if uploaded_file:
                     alpha_matting_background_threshold=10,
                     alpha_matting_erode_size=5
                 )
-                st.image(output, caption="✅ Transparent Background", use_column_width=True)
+                st.image(output, caption="✅ Transparent Background", use_container_width=True)
                 buf = BytesIO()
                 output.save(buf, format="PNG")
                 st.download_button("⬇️ Download PNG", buf.getvalue(), file_name="transparent.png", mime="image/png")
@@ -155,7 +155,7 @@ if uploaded_file:
         h = st.number_input("Height", 1, image.height, image.height)
         if st.button("✂️ Crop"):
             cropped = image.crop((x, y, x + w, y + h))
-            st.image(cropped, caption="✂️ Cropped Image", use_column_width=True)
+            st.image(cropped, caption="✂️ Cropped Image", use_container_width=True)
             buf = BytesIO()
             cropped.save(buf, format="PNG")
             st.download_button("⬇️ Download Cropped", buf.getvalue(), file_name="cropped.png")
@@ -163,9 +163,9 @@ if uploaded_file:
     elif feature == "Image Resizer":
         width = st.number_input("New Width", 1, 5000, image.width)
         height = st.number_input("New Height", 1, 5000, image.height)
-        if st.button("📐 Resize"):
+        if st.button("📀 Resize"):
             resized = image.resize((width, height), Image.LANCZOS)
-            st.image(resized, caption="📐 Resized Image", use_column_width=True)
+            st.image(resized, caption="📀 Resized Image", use_container_width=True)
             buf = BytesIO()
             resized.save(buf, format="PNG")
             st.download_button("⬇️ Download Resized", buf.getvalue(), file_name="resized.png")
@@ -175,7 +175,7 @@ if uploaded_file:
         if st.button("🧼 Apply Background"):
             bg = Image.new("RGBA", image.size, color)
             bg.paste(image, mask=image.split()[3])
-            st.image(bg, caption="🎨 Background Color Changed", use_column_width=True)
+            st.image(bg, caption="🎨 Background Color Changed", use_container_width=True)
             buf = BytesIO()
             bg.save(buf, format="PNG")
             st.download_button("⬇️ Download Colored", buf.getvalue(), file_name="bg_changed.png")
@@ -188,7 +188,7 @@ if uploaded_file:
             draw = ImageDraw.Draw(formatted)
             font = ImageFont.load_default()
             draw.text((10, image.height - 40), f"Name: {name}   Date: {date}", fill="black", font=font)
-            st.image(formatted, caption="📝 Name and Date Added", use_column_width=True)
+            st.image(formatted, caption="📝 Name and Date Added", use_container_width=True)
             buf = BytesIO()
             formatted.save(buf, format="PNG")
             st.download_button("⬇️ Download Exam Format", buf.getvalue(), file_name="exam_format.png")
@@ -198,7 +198,7 @@ if uploaded_file:
         height = st.number_input("Signature Height (px)", 20, 500, 100)
         if st.button("✍️ Resize Signature"):
             resized = image.resize((width, height), Image.LANCZOS)
-            st.image(resized, caption="✍️ Resized Signature", use_column_width=False)
+            st.image(resized, caption="✍️ Resized Signature", use_container_width=False)
             buf = BytesIO()
             resized.save(buf, format="PNG")
             st.download_button("⬇️ Download Signature", buf.getvalue(), file_name="signature_resized.png")
@@ -221,132 +221,26 @@ if uploaded_file:
             date_width = draw.textlength(date, font=font_regular)
             draw.text(((354 - name_width) / 2, 418), name.upper(), fill="black", font=font_bold)
             draw.text(((354 - date_width) / 2, 445), date, fill="black", font=font_regular)
-            st.image(canvas, caption="🪪 UPSC Format Image", use_column_width=False)
+            st.image(canvas, caption="🪪 UPSC Format Image", use_container_width=False)
             buf = BytesIO()
             canvas.save(buf, format="JPEG")
             st.download_button("⬇️ Download UPSC Photo", buf.getvalue(), file_name="upsc_photo.jpg", mime="image/jpeg")
 
-
-# Place this right below the last elif (UPSC Photo Format Generator):
-
-    elif feature == "Convert to Grayscale":
-        if st.button("🌑 Convert to Grayscale"):
-            gray_img = image.convert("L")
-            st.image(gray_img, caption="🌑 Grayscale Image", use_column_width=True)
-            buf = BytesIO()
-            gray_img.save(buf, format="PNG")
-            st.download_button("⬇️ Download Grayscale", buf.getvalue(), file_name="grayscale.png")
-
-    elif feature == "Rotate Image":
-        angle = st.slider("🔄 Select Rotation Angle", 0, 360, 90)
-        if st.button("🔃 Rotate"):
-            rotated = image.rotate(angle, expand=True)
-            st.image(rotated, caption=f"🔃 Rotated by {angle}°", use_column_width=True)
-            buf = BytesIO()
-            rotated.save(buf, format="PNG")
-            st.download_button("⬇️ Download Rotated", buf.getvalue(), file_name="rotated.png")
-
-    elif feature == "Flip Image":
-        direction = st.radio("↔️ Flip Direction", ["Horizontal", "Vertical"])
-        if st.button("↔️ Flip"):
-            flipped = image.transpose(Image.FLIP_LEFT_RIGHT if direction == "Horizontal" else Image.FLIP_TOP_BOTTOM)
-            st.image(flipped, caption=f"↔️ Flipped {direction}", use_column_width=True)
-            buf = BytesIO()
-            flipped.save(buf, format="PNG")
-            st.download_button("⬇️ Download Flipped", buf.getvalue(), file_name="flipped.png")
-
-    elif feature == "Convert Image Format":
-        new_format = st.selectbox("📁 Convert to Format", ["PNG", "JPEG"])
-        if st.button("🔁 Convert Format"):
-            buf = BytesIO()
-            image_rgb = image.convert("RGB")
-            image_rgb.save(buf, format=new_format)
-            ext = "jpg" if new_format == "JPEG" else "png"
-            mime = "image/jpeg" if new_format == "JPEG" else "image/png"
-            st.download_button(f"⬇️ Download as {new_format}", buf.getvalue(), file_name=f"converted.{ext}", mime=mime)
-
-    elif feature == "Draw Shape":
-        shape = st.selectbox("⬛ Choose Shape", ["Rectangle", "Circle"])
-        x = st.number_input("Start X", 0, image.width, 10)
-        y = st.number_input("Start Y", 0, image.height, 10)
-        w = st.number_input("Width/Radius", 1, image.width, 100)
-        h = st.number_input("Height (for Rectangle)", 1, image.height, 100)
-        color = st.color_picker("🎨 Pick Shape Color", "#ff0000")
-        if st.button("✏️ Draw"):
-            draw_img = image.copy()
-            draw = ImageDraw.Draw(draw_img)
-            if shape == "Rectangle":
-                draw.rectangle([x, y, x + w, y + h], outline=color, width=5)
-            else:
-                draw.ellipse([x, y, x + w, y + w], outline=color, width=5)
-            st.image(draw_img, caption=f"✏️ {shape} Drawn", use_column_width=True)
-            buf = BytesIO()
-            draw_img.save(buf, format="PNG")
-            st.download_button("⬇️ Download Drawn Image", buf.getvalue(), file_name="shape_drawn.png")
-
-    elif feature == "Add Custom Text":
-        text = st.text_input("🖊️ Enter Text")
-        x = st.number_input("Text X Position", 0, image.width, 10)
-        y = st.number_input("Text Y Position", 0, image.height, 10)
-        color = st.color_picker("🎨 Pick Text Color", "#000000")
-        size = st.slider("🔠 Font Size", 10, 100, 20)
-        if st.button("📝 Add Text"):
-            edited = image.copy()
-            draw = ImageDraw.Draw(edited)
-            try:
-                font = ImageFont.truetype("arial.ttf", size)
-            except:
-                font = ImageFont.load_default()
-            draw.text((x, y), text, fill=color, font=font)
-            st.image(edited, caption="📝 Text Added", use_column_width=True)
-            buf = BytesIO()
-            edited.save(buf, format="PNG")
-            st.download_button("⬇️ Download Text Image", buf.getvalue(), file_name="text_added.png")
-
-elif feature == "AI Image Upscaler":
-    if uploaded_file is not None:
-        try:
-            # Load and display the original image
-            image = Image.open(uploaded_file).convert("RGBA")
-            st.image(image, caption="📷 Original Image", use_column_width=True)
-
-            # Scale selection
-            scale = st.selectbox("🔍 Select Upscale Factor", ["2×", "4×"])
-
-            # Upscale button
-            if st.button("🚀 Upscale"):
-                with st.spinner("Upscaling image..."):
-                    scale_factor = 2 if scale == "2×" else 4
-                    upscaled = image.resize(
-                        (image.width * scale_factor, image.height * scale_factor),
-                        Image.LANCZOS
-                    )
-
-                # Display the upscaled image
-                st.image(upscaled, caption=f"🖼️ Upscaled {scale}", use_column_width=True)
-
-                # Save and offer download
-                buf = BytesIO()
-                upscaled.save(buf, format="PNG")
-                st.download_button(
-                    "⬇️ Download Upscaled Image",
-                    buf.getvalue(),
-                    file_name="upscaled.png",
-                    mime="image/png"
+    elif feature == "AI Image Upscaler":
+        scale = st.selectbox("🔍 Select Upscale Factor", ["2×", "4×"])
+        if st.button("🚀 Upscale"):
+            with st.spinner("Upscaling image..."):
+                scale_factor = 2 if scale == "2×" else 4
+                upscaled = image.resize(
+                    (image.width * scale_factor, image.height * scale_factor),
+                    Image.LANCZOS
                 )
-        except Exception as e:
-            st.error(f"❌ Error processing image: {e}")
-    else:
-        st.warning("⚠️ Please upload an image to use the upscaler.")
-
-
-
-
-
-
-
-
-
-
-
-
+            st.image(upscaled, caption=f"🖼️ Upscaled {scale}", use_container_width=True)
+            buf = BytesIO()
+            upscaled.save(buf, format="PNG")
+            st.download_button(
+                "⬇️ Download Upscaled Image",
+                buf.getvalue(),
+                file_name="upscaled.png",
+                mime="image/png"
+            )
