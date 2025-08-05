@@ -210,8 +210,10 @@ if uploaded_file:
             except:
                 font_bold = ImageFont.load_default()
                 font_regular = ImageFont.load_default()
-            draw.text((20, 418), name.upper(), fill="black", font=font_bold)
-            draw.text((100, 445), date, fill="black", font=font_regular)
+            name_width = draw.textlength(name.upper(), font=font_bold)
+            date_width = draw.textlength(date, font=font_regular)
+            draw.text(((354 - name_width) / 2, 418), name.upper(), fill="black", font=font_bold)
+            draw.text(((354 - date_width) / 2, 445), date, fill="black", font=font_regular)
             st.image(canvas, caption="🪪 UPSC Format Image", use_column_width=False)
             buf = BytesIO()
             canvas.save(buf, format="JPEG")
