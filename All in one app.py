@@ -8,7 +8,7 @@ from io import BytesIO
 from rembg.bg import remove, new_session
 
 # --- Page Config ---
-st.set_page_config(page_title="🖼️ Transparent BG Remover & Editor", layout="wide")
+st.set_page_config(page_title="🖼️ Multi Feature Image Tool", layout="wide")
 
 # --- Constants ---
 SESSION_TIMEOUT = 180
@@ -105,72 +105,92 @@ with st.sidebar:
         logout_user()
         st.rerun()
 
-# --- Features UI ---
-st.title("🛠️ Transparent Background Remover & Editor")
+# --- Feature Selection ---
+st.title("🧰 Image Editing Tools")
+feature = st.selectbox("Choose a feature:", [
+    "Background Remover", 
+    "Image Cropper", 
+    "Image Resizer", 
+    "Change Background Color", 
+    "Add Name & Date (Exam Format)",
+    "Resize Signature for Exams"
+])
 
-uploaded_file = st.file_uploader("📤 Upload Image (JPG/PNG)", type=["png", "jpg", "jpeg"])
+# --- File Upload ---
+uploaded_file = st.file_uploader("📤 Upload Image", type=["png", "jpg", "jpeg"])
+
 if uploaded_file:
     image = Image.open(uploaded_file).convert("RGBA")
     st.image(image, caption="📷 Original Image", use_column_width=True)
 
-    if st.button("✨ Remove Background"):
-        with st.spinner("Processing high-accuracy model..."):
-            session = new_session("isnet-general-use")
-            image = remove(
-                image,
-                session=session,
-                alpha_matting=True,
-                alpha_matting_foreground_threshold=240,
-                alpha_matting_background_threshold=10,
-                alpha_matting_erode_size=5
-            )
-        st.image(image, caption="✅ Clean Transparent Output", use_column_width=True)
+    if feature == "Background Remover":
+        if st.button("✨ Remove Background"):
+            with st.spinner("Processing with high-accuracy model..."):
+                session = new_session("isnet-general-use")
+                output = remove(
+                    image,
+                    session=session,
+                    alpha_matting=True,
+                    alpha_matting_foreground_threshold=240,
+                    alpha_matting_background_threshold=10,
+                    alpha_matting_erode_size=5
+                )
+                st.image(output, caption="✅ Transparent Background", use_column_width=True)
+                buf = BytesIO()
+                output.save(buf, format="PNG")
+                st.download_button("⬇️ Download PNG", buf.getvalue(), file_name="transparent.png", mime="image/png")
 
-    st.subheader("✂️ Crop Image")
-    x1 = st.number_input("Left", 0, image.width, 0)
-    y1 = st.number_input("Top", 0, image.height, 0)
-    x2 = st.number_input("Right", 0, image.width, image.width)
-    y2 = st.number_input("Bottom", 0, image.height, image.height)
-    if st.button("Apply Crop"):
-        image = image.crop((x1, y1, x2, y2))
-        st.image(image, caption="Cropped Image")
+    elif feature == "Image Cropper":
+        x = st.number_input("Crop from Left", 0, image.width, 0)
+        y = st.number_input("Crop from Top", 0, image.height, 0)
+        w = st.number_input("Width", 1, image.width, image.width)
+        h = st.number_input("Height", 1, image.height, image.height)
+        if st.button("✂️ Crop"):
+            cropped = image.crop((x, y, x + w, y + h))
+            st.image(cropped, caption="✂️ Cropped Image", use_column_width=True)
+            buf = BytesIO()
+            cropped.save(buf, format="PNG")
+            st.download_button("⬇️ Download Cropped", buf.getvalue(), file_name="cropped.png")
 
-    st.subheader("📐 Resize Image")
-    new_width = st.number_input("Width", 1, 5000, image.width)
-    new_height = st.number_input("Height", 1, 5000, image.height)
-    if st.button("Apply Resize"):
-        image = image.resize((new_width, new_height), Image.LANCZOS)
-        st.image(image, caption="Resized Image")
+    elif feature == "Image Resizer":
+        width = st.number_input("New Width", 1, 5000, image.width)
+        height = st.number_input("New Height", 1, 5000, image.height)
+        if st.button("📐 Resize"):
+            resized = image.resize((width, height), Image.LANCZOS)
+            st.image(resized, caption="📐 Resized Image", use_column_width=True)
+            buf = BytesIO()
+            resized.save(buf, format="PNG")
+            st.download_button("⬇️ Download Resized", buf.getvalue(), file_name="resized.png")
 
-    st.subheader("🎨 Change Background Color")
-    bg_color = st.color_picker("Pick Color", "#FFFFFF")
-    if st.button("Apply BG Color"):
-        rgb = tuple(int(bg_color[i:i+2], 16) for i in (1, 3, 5))
-        bg = Image.new("RGBA", image.size, rgb + (255,))
-        image = Image.alpha_composite(bg, image)
-        st.image(image, caption="New Background")
+    elif feature == "Change Background Color":
+        color = st.color_picker("🎨 Choose Background Color", "#ffffff")
+        if st.button("🧼 Apply Background"):
+            bg = Image.new("RGBA", image.size, color)
+            bg.paste(image, mask=image.split()[3])
+            st.image(bg, caption="🎨 Background Color Changed", use_column_width=True)
+            buf = BytesIO()
+            bg.save(buf, format="PNG")
+            st.download_button("⬇️ Download Colored", buf.getvalue(), file_name="bg_changed.png")
 
-    st.subheader("📝 Add Name and Date")
-    name = st.text_input("Enter Name")
-    date = st.text_input("Enter Date")
-    if st.button("Apply Name/Date"):
-        draw = ImageDraw.Draw(image)
-        font = ImageFont.load_default()
-        text = f"{name} | {date}"
-        w, h = draw.textsize(text, font=font)
-        x = (image.width - w) // 2
-        y = image.height - h - 10
-        draw.rectangle([x-5, y-5, x+w+5, y+h+5], fill=(255,255,255,180))
-        draw.text((x, y), text, font=font, fill=(0,0,0))
-        st.image(image, caption="Image with Name & Date")
+    elif feature == "Add Name & Date (Exam Format)":
+        name = st.text_input("👤 Name")
+        date = st.text_input("📅 Date")
+        if st.button("📝 Generate Format"):
+            formatted = image.copy()
+            draw = ImageDraw.Draw(formatted)
+            font = ImageFont.load_default()
+            draw.text((10, image.height - 40), f"Name: {name}   Date: {date}", fill="black", font=font)
+            st.image(formatted, caption="📝 Name and Date Added", use_column_width=True)
+            buf = BytesIO()
+            formatted.save(buf, format="PNG")
+            st.download_button("⬇️ Download Exam Format", buf.getvalue(), file_name="exam_format.png")
 
-    signature = st.file_uploader("Upload Signature", type=["png","jpg","jpeg"])
-    if signature:
-        sig = Image.open(signature).convert("RGBA")
-        sig_resized = sig.resize((image.width//3, image.height//10), Image.LANCZOS)
-        image.paste(sig_resized, (10, image.height - sig_resized.height - 10), sig_resized)
-        st.image(image, caption="With Signature")
-
-    buf = BytesIO()
-    image.save(buf, format="PNG")
-    st.download_button("⬇️ Download Final Image", buf.getvalue(), file_name="final_image.png", mime="image/png")
+    elif feature == "Resize Signature for Exams":
+        width = st.number_input("Signature Width (px)", 50, 1000, 300)
+        height = st.number_input("Signature Height (px)", 20, 500, 100)
+        if st.button("✍️ Resize Signature"):
+            resized = image.resize((width, height), Image.LANCZOS)
+            st.image(resized, caption="✍️ Resized Signature", use_column_width=False)
+            buf = BytesIO()
+            resized.save(buf, format="PNG")
+            st.download_button("⬇️ Download Signature", buf.getvalue(), file_name="signature_resized.png")
