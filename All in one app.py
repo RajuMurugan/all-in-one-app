@@ -113,7 +113,8 @@ feature = st.selectbox("Choose a feature:", [
     "Image Resizer", 
     "Change Background Color", 
     "Add Name & Date (Exam Format)",
-    "Resize Signature for Exams"
+    "Resize Signature for Exams",
+    "UPSC Photo Format Generator"
 ])
 
 # --- File Upload ---
@@ -194,3 +195,18 @@ if uploaded_file:
             buf = BytesIO()
             resized.save(buf, format="PNG")
             st.download_button("⬇️ Download Signature", buf.getvalue(), file_name="signature_resized.png")
+
+    elif feature == "UPSC Photo Format Generator":
+        name = st.text_input("👤 Full Name (as per ID proof)")
+        date = st.text_input("📅 Date (dd-mm-yyyy)")
+        if st.button("📄 Generate UPSC Format"):
+            upsc_img = image.convert("RGB").resize((200, 230))  # Standard UPSC image size in pixels
+            canvas = Image.new("RGB", (200, 250), "white")
+            canvas.paste(upsc_img, (0, 0))
+            draw = ImageDraw.Draw(canvas)
+            font = ImageFont.load_default()
+            draw.text((10, 235), f"{name} {date}", fill="black", font=font)
+            st.image(canvas, caption="🪪 UPSC Format Image", use_column_width=False)
+            buf = BytesIO()
+            canvas.save(buf, format="JPEG")
+            st.download_button("⬇️ Download UPSC Photo", buf.getvalue(), file_name="upsc_photo.jpg", mime="image/jpeg")
