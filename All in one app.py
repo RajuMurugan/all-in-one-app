@@ -304,22 +304,28 @@ if uploaded_file:
             st.download_button("⬇️ Download Text Image", buf.getvalue(), file_name="text_added.png")
 
 elif feature == "AI Image Upscaler":
-    if uploaded_file:
-        image = Image.open(uploaded_file).convert("RGBA")
-        st.image(image, caption="📷 Original Image", use_column_width=True)
+    if uploaded_file is not None:
+        try:
+            # Load and display the original image
+            image = Image.open(uploaded_file).convert("RGBA")
+            st.image(image, caption="📷 Original Image", use_column_width=True)
 
-        scale = st.selectbox("🔍 Select Upscale Factor", ["2×", "4×"])
-        if st.button("🚀 Upscale"):
-            with st.spinner("Upscaling image..."):
-                scale_factor = 2 if scale == "2×" else 4
-                upscaled = image.resize(
-                    (image.width * scale_factor, image.height * scale_factor),
-                    Image.LANCZOS
-                )
+            # Scale selection
+            scale = st.selectbox("🔍 Select Upscale Factor", ["2×", "4×"])
 
-            st.image(upscaled, caption=f"🖼️ Upscaled {scale}", use_column_width=True)
+            # Upscale button
+            if st.button("🚀 Upscale"):
+                with st.spinner("Upscaling image..."):
+                    scale_factor = 2 if scale == "2×" else 4
+                    upscaled = image.resize(
+                        (image.width * scale_factor, image.height * scale_factor),
+                        Image.LANCZOS
+                    )
 
-            try:
+                # Display the upscaled image
+                st.image(upscaled, caption=f"🖼️ Upscaled {scale}", use_column_width=True)
+
+                # Save and offer download
                 buf = BytesIO()
                 upscaled.save(buf, format="PNG")
                 st.download_button(
@@ -328,10 +334,12 @@ elif feature == "AI Image Upscaler":
                     file_name="upscaled.png",
                     mime="image/png"
                 )
-            except Exception as e:
-                st.error(f"❌ Failed to generate download: {e}")
+        except Exception as e:
+            st.error(f"❌ Error processing image: {e}")
     else:
         st.warning("⚠️ Please upload an image to use the upscaler.")
+
+
 
 
 
