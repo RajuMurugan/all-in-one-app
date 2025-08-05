@@ -121,6 +121,7 @@ feature = st.selectbox("Choose a feature:", [
     "Convert Image Format",
     "Draw Shape",
     "Add Custom Text"
+    "AI Image Upscaler"
 ])
 
 # --- File Upload ---
@@ -301,5 +302,18 @@ if uploaded_file:
             buf = BytesIO()
             edited.save(buf, format="PNG")
             st.download_button("⬇️ Download Text Image", buf.getvalue(), file_name="text_added.png")
+
+elif feature == "AI Image Upscaler":
+    scale = st.selectbox("Select Upscale Factor", ["2×", "4×"])
+    if st.button("🔍 Upscale"):
+        with st.spinner("Upscaling image..."):
+            # Option A: send to Pixelcut API
+            # Option B: run Real-ESRGAN locally
+            upscaled = upscale_function(image, scale=scale)
+        st.image(upscaled, caption=f"Upscaled {scale}", use_column_width=True)
+        buf = BytesIO()
+        upscaled.save(buf, format="PNG")
+        st.download_button("⬇️ Download Upscaled", buf.getvalue(), file_name="upscaled.png")
+
 
 
