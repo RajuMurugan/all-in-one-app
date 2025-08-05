@@ -120,7 +120,7 @@ feature = st.selectbox("Choose a feature:", [
     "Flip Image",
     "Convert Image Format",
     "Draw Shape",
-    "Add Custom Text"
+    "Add Custom Text",
     "AI Image Upscaler"
 ])
 
@@ -314,6 +314,7 @@ elif feature == "AI Image Upscaler":
         buf = BytesIO()
         upscaled.save(buf, format="PNG")
         st.download_button("⬇️ Download Upscaled", buf.getvalue(), file_name="upscaled.png")
+
 
 
 
