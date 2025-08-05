@@ -200,12 +200,18 @@ if uploaded_file:
         name = st.text_input("👤 Full Name (as per ID proof)")
         date = st.text_input("📅 Date (dd-mm-yyyy)")
         if st.button("📄 Generate UPSC Format"):
-            upsc_img = image.convert("RGB").resize((200, 230))  # Standard UPSC image size in pixels
-            canvas = Image.new("RGB", (200, 250), "white")
+            upsc_img = image.convert("RGB").resize((354, 413))
+            canvas = Image.new("RGB", (354, 470), "white")
             canvas.paste(upsc_img, (0, 0))
             draw = ImageDraw.Draw(canvas)
-            font = ImageFont.load_default()
-            draw.text((10, 235), f"{name} {date}", fill="black", font=font)
+            try:
+                font_bold = ImageFont.truetype("arialbd.ttf", 24)
+                font_regular = ImageFont.truetype("arial.ttf", 20)
+            except:
+                font_bold = ImageFont.load_default()
+                font_regular = ImageFont.load_default()
+            draw.text((20, 418), name.upper(), fill="black", font=font_bold)
+            draw.text((100, 445), date, fill="black", font=font_regular)
             st.image(canvas, caption="🪪 UPSC Format Image", use_column_width=False)
             buf = BytesIO()
             canvas.save(buf, format="JPEG")
